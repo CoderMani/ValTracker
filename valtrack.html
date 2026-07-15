@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ValTrack — Validation Program Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F5;
+  --bg-alt:#E8ECEE;
+  --surface:#FFFFFF;
+  --sidebar-bg:#0F2129;
+  --sidebar-bg-2:#152C36;
+  --sidebar-ink:#9FB3BC;
+  --sidebar-ink-dim:#5E7883;
+  --sidebar-ink-active:#F4F8F9;
+  --sidebar-accent:#3FB6AC;
+  --ink:#15222B;
+  --ink-soft:#556570;
+  --ink-faint:#8B99A3;
+  --border:#DCE2E6;
+  --border-strong:#C4CCD1;
+  --accent:#0E6E6B;
+  --accent-dark:#0A524F;
+  --accent-soft:#E1F1EF;
+  --status-green:#237A52;
+  --status-green-soft:#E1F3E9;
+  --status-blue:#2A62A0;
+  --status-blue-soft:#E4EEF8;
+  --status-amber:#B9761F;
+  --status-amber-soft:#FAEDDA;
+  --status-red:#B0392B;
+  --status-red-soft:#FAE4E1;
+  --status-gray:#7C8892;
+  --status-gray-soft:#EBEDEF;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --radius-sm:4px;
+  --radius-md:8px;
+  --radius-lg:12px;
+  --shadow-sm:0 1px 2px rgba(13,28,36,.08);
+  --shadow-md:0 6px 20px rgba(13,28,36,.12);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--ink);
+  font-size:13.5px;
+  -webkit-font-smoothing:antialiased;
+}
+#app{display:flex;min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:230px;flex:0 0 230px;
+  background:linear-gradient(180deg,var(--sidebar-bg),var(--sidebar-bg-2));
+  color:var(--sidebar-ink);
+  display:flex;flex-direction:column;
+  padding:18px 0 14px;
+  position:sticky;top:0;height:100vh;
+}
+.sidebar-brand{
+  display:flex;align-items:center;gap:9px;
+  padding:0 18px 18px;
+  margin-bottom:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.brand-mark{
+  width:26px;height:26px;border-radius:6px;
+  background:var(--sidebar-accent);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-weight:600;font-size:12px;color:#062723;
+  flex:0 0 26px;
+}
+.brand-name{font-family:var(--font-display);font-weight:600;font-size:15.5px;color:var(--sidebar-ink-active);letter-spacing:.2px;}
+.brand-sub{font-family:var(--font-mono);font-size:9.5px;color:var(--sidebar-ink-dim);letter-spacing:.06em;text-transform:uppercase;margin-top:1px;}
+
+.nav-section-label{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--sidebar-ink-dim);padding:14px 18px 6px;
+}
+.nav-list{list-style:none;margin:0;padding:0 10px;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:7px;cursor:pointer;
+  color:var(--sidebar-ink);font-size:13px;font-weight:500;
+  position:relative;margin-bottom:1px;
+  transition:background .12s ease,color .12s ease;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:var(--sidebar-ink-active);}
+.nav-item.active{background:rgba(63,182,172,.16);color:var(--sidebar-ink-active);}
+.nav-item.active::before{
+  content:"";position:absolute;left:-10px;top:8px;bottom:8px;width:3px;
+  background:var(--sidebar-accent);border-radius:2px;
+}
+.nav-icon{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;fill:none;stroke-width:1.6;opacity:.9;}
+.nav-label{flex:1;}
+.nav-led{
+  width:7px;height:7px;border-radius:50%;flex:0 0 7px;
+  box-shadow:0 0 0 2px rgba(255,255,255,.04);
+}
+.nav-led.on-red{background:#E5665A;box-shadow:0 0 6px 1px rgba(229,102,90,.7);}
+.nav-led.on-amber{background:#E3A94A;box-shadow:0 0 6px 1px rgba(227,169,74,.6);}
+.nav-led.on-teal{background:var(--sidebar-accent);box-shadow:0 0 6px 1px rgba(63,182,172,.6);}
+.nav-led.off{background:#2C4048;}
+.nav-count{
+  font-family:var(--font-mono);font-size:10.5px;color:var(--sidebar-ink-dim);min-width:14px;text-align:right;
+}
+
+.sidebar-foot{margin-top:auto;padding:14px 18px 0;border-top:1px solid rgba(255,255,255,.08);}
+.sidebar-foot-btn{
+  width:100%;text-align:left;background:none;border:none;color:var(--sidebar-ink-dim);
+  font-family:var(--font-mono);font-size:10.5px;padding:8px 0;cursor:pointer;letter-spacing:.03em;
+}
+.sidebar-foot-btn:hover{color:var(--sidebar-ink-active);}
+
+/* ---------- Main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{
+  height:58px;flex:0 0 58px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:16px;padding:0 22px;
+  position:sticky;top:0;z-index:20;
+}
+.topbar-title{font-family:var(--font-display);font-size:17px;font-weight:600;color:var(--ink);white-space:nowrap;}
+.topbar-title .eyebrow{display:block;font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-bottom:1px;}
+.topbar-spacer{flex:1;}
+.select{
+  font-family:var(--font-body);font-size:12.5px;color:var(--ink);
+  background:var(--surface);border:1px solid var(--border-strong);border-radius:7px;
+  padding:7px 10px;cursor:pointer;
+}
+.segmented{display:flex;border:1px solid var(--border-strong);border-radius:7px;overflow:hidden;}
+.segmented button{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.03em;color:var(--ink-soft);
+  background:var(--surface);border:none;padding:7px 11px;cursor:pointer;border-right:1px solid var(--border);
+}
+.segmented button:last-child{border-right:none;}
+.segmented button.active{background:var(--accent);color:#fff;}
+.btn{
+  font-family:var(--font-body);font-size:12.5px;font-weight:600;
+  padding:8px 13px;border-radius:7px;border:1px solid var(--border-strong);
+  background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{border-color:var(--ink-faint);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-dark);border-color:var(--accent-dark);}
+.btn-sm{padding:5px 9px;font-size:11.5px;border-radius:6px;}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--ink-soft);}
+.btn-ghost:hover{background:var(--bg-alt);}
+.btn-danger{color:var(--status-red);}
+
+.content{flex:1;padding:22px 26px 60px;overflow-x:hidden;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* ---------- Corner-frame panels (signature) ---------- */
+.corner-frame{position:relative;}
+.corner-frame::before,.corner-frame::after,
+.corner-frame .cf-br,.corner-frame .cf-bl{
+  content:"";position:absolute;width:9px;height:9px;border:1.5px solid var(--accent);opacity:.55;
+}
+.corner-frame::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+.corner-frame::after{top:-1px;right:-1px;border-left:none;border-bottom:none;}
+
+/* ---------- KPI ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:14px 16px;position:relative;
+}
+.kpi-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-faint);}
+.kpi-value{font-family:var(--font-display);font-size:27px;font-weight:600;margin-top:4px;color:var(--ink);}
+.kpi-value .unit{font-size:13px;color:var(--ink-faint);font-weight:500;margin-left:3px;}
+.kpi-foot{font-size:11px;color:var(--ink-soft);margin-top:5px;}
+.kpi-foot.warn{color:var(--status-red);}
+.kpi-foot.good{color:var(--status-green);}
+
+/* ---------- Panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:18px;}
+.panel-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.panel-title{font-family:var(--font-display);font-size:14.5px;font-weight:600;}
+.panel-sub{font-size:11.5px;color:var(--ink-faint);}
+.panel-body{padding:14px 16px;}
+.panel-grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start;}
+
+/* ---------- Badges ---------- */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10.5px;font-weight:500;
+  padding:3px 8px;border-radius:20px;letter-spacing:.02em;white-space:nowrap;
+}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;}
+.badge-red{background:var(--status-red-soft);color:var(--status-red);}
+.badge-red::before{background:var(--status-red);}
+.badge-amber{background:var(--status-amber-soft);color:var(--status-amber);}
+.badge-amber::before{background:var(--status-amber);}
+.badge-green{background:var(--status-green-soft);color:var(--status-green);}
+.badge-green::before{background:var(--status-green);}
+.badge-blue{background:var(--status-blue-soft);color:var(--status-blue);}
+.badge-blue::before{background:var(--status-blue);}
+.badge-gray{background:var(--status-gray-soft);color:var(--status-gray);}
+.badge-gray::before{background:var(--status-gray);}
+
+/* ---------- Tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{
+  text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap;
+}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:hover{background:var(--bg-alt);}
+tbody tr:last-child td{border-bottom:none;}
+.cell-mono{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-soft);}
+.cell-strong{font-weight:600;}
+.row-actions{display:flex;gap:4px;opacity:0;transition:opacity .1s;}
+tbody tr:hover .row-actions{opacity:1;}
+.table-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.table-scroll{overflow-x:auto;}
+
+/* ---------- Filter bar ---------- */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.filter-bar .select{padding:6px 9px;font-size:12px;}
+.search-input{
+  font-family:var(--font-body);font-size:12.5px;border:1px solid var(--border-strong);border-radius:7px;
+  padding:7px 10px;min-width:180px;background:var(--surface);
+}
+
+/* ---------- Empty state ---------- */
+.empty-state{text-align:center;padding:40px 20px;color:var(--ink-faint);}
+.empty-state-title{font-family:var(--font-display);font-size:14px;color:var(--ink-soft);margin-bottom:4px;}
+.empty-state p{font-size:12px;margin:0;}
+
+/* ---------- Progress bar ---------- */
+.progress-track{background:var(--bg-alt);border-radius:20px;height:6px;width:100%;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:20px;}
+.progress-row{display:flex;align-items:center;gap:8px;}
+.progress-row .progress-track{flex:1;}
+.progress-pct{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);width:32px;text-align:right;}
+
+/* ---------- Program cards ---------- */
+.program-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+.program-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:15px 16px;cursor:pointer;transition:border-color .12s,box-shadow .12s;}
+.program-card:hover{border-color:var(--accent);box-shadow:var(--shadow-sm);}
+.program-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;}
+.program-card-name{font-family:var(--font-display);font-weight:600;font-size:14px;line-height:1.3;}
+.program-card-meta{font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;}
+.program-card-meta span{font-family:var(--font-mono);color:var(--ink-faint);}
+.program-card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:11px;color:var(--ink-faint);}
+
+/* ---------- Gantt ---------- */
+.gantt-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.gantt-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--ink-soft);align-items:center;}
+.gantt-legend .lg-item{display:flex;align-items:center;gap:5px;}
+.lg-swatch{width:11px;height:11px;border-radius:3px;flex:0 0 11px;}
+.gantt-panel{overflow:hidden;}
+.gantt-body{display:flex;}
+.gantt-labels{flex:0 0 250px;border-right:1px solid var(--border);}
+.gantt-label-header{height:46px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.06em;background:var(--bg-alt);}
+.gantt-label-group{height:28px;display:flex;align-items:center;padding:0 12px;background:var(--bg-alt);font-family:var(--font-mono);font-size:10.5px;font-weight:600;color:var(--accent-dark);letter-spacing:.03em;border-bottom:1px solid var(--border);border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gantt-label-row{height:36px;display:flex;flex-direction:column;justify-content:center;padding:2px 12px;border-bottom:1px solid var(--border);cursor:pointer;}
+.gantt-label-row:hover{background:var(--bg-alt);}
+.gantt-label-row .lbl-name{font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gantt-label-row .lbl-meta{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);}
+.gantt-timeline-scroll{flex:1;overflow-x:auto;overflow-y:hidden;}
+.gantt-timeline-inner{position:relative;}
+.gantt-month-header{height:46px;position:relative;border-bottom:1px solid var(--border);background:var(--bg-alt);}
+.gantt-month-seg{position:absolute;top:0;bottom:0;border-left:1px solid var(--border-strong);display:flex;align-items:center;padding-left:7px;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);font-weight:500;}
+.gantt-group-spacer{height:28px;border-bottom:1px solid var(--border);border-top:1px solid var(--border);background:var(--bg-alt);position:relative;}
+.gantt-track-row{height:36px;position:relative;border-bottom:1px solid var(--border);}
+.gantt-gridline{position:absolute;top:0;bottom:0;width:1px;background:var(--border);opacity:.6;}
+.gantt-today{position:absolute;top:0;bottom:0;width:0;border-left:1.5px dashed var(--status-red);z-index:5;}
+.gantt-today-flag{position:absolute;top:-1px;left:3px;font-family:var(--font-mono);font-size:8.5px;color:var(--status-red);background:var(--surface);padding:0 3px;white-space:nowrap;font-weight:600;letter-spacing:.03em;}
+.gantt-bar{
+  position:absolute;top:6px;height:24px;border-radius:5px;cursor:pointer;
+  display:flex;align-items:center;overflow:hidden;box-shadow:0 1px 1px rgba(0,0,0,.08);
+}
+.gantt-bar::before{content:"";position:absolute;left:3px;top:50%;transform:translateY(-50%);width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.65);}
+.gantt-bar-label{font-size:10.5px;color:#fff;font-weight:600;padding-left:13px;padding-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gantt-bar-label.outside{color:var(--ink);padding-left:5px;}
+.bar-done{background:var(--status-green);}
+.bar-inprogress{background:var(--status-blue);}
+.bar-scheduled{background:var(--status-gray);}
+.bar-blocked{background:var(--status-red);}
+.bar-atrisk{background:repeating-linear-gradient(45deg,var(--status-amber),var(--status-amber) 6px,#D8A24F 6px,#D8A24F 12px);}
+.gantt-milestone{
+  position:absolute;top:8px;width:18px;height:18px;background:var(--accent-dark);
+  transform:rotate(45deg);cursor:pointer;border-radius:3px;box-shadow:0 1px 1px rgba(0,0,0,.1);
+}
+
+/* ---------- Kanban ---------- */
+.kanban-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;}
+.kanban-col{flex:0 0 250px;background:var(--bg-alt);border-radius:var(--radius-md);padding:10px;min-height:200px;}
+.kanban-col-header{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 10px;}
+.kanban-col-title{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+.kanban-col-count{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-faint);background:var(--surface);border-radius:10px;padding:1px 7px;}
+.kanban-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 11px;margin-bottom:8px;
+  cursor:grab;box-shadow:var(--shadow-sm);
+}
+.kanban-card:active{cursor:grabbing;}
+.kanban-card.drag-over{border-color:var(--accent);}
+.kanban-card-title{font-size:12.5px;font-weight:600;margin-bottom:5px;line-height:1.3;}
+.kanban-card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;}
+.kanban-card-sys{font-family:var(--font-mono);font-size:10px;color:var(--ink-faint);}
+.kanban-col.drag-active{outline:2px dashed var(--accent);outline-offset:-4px;}
+
+/* ---------- Coverage ---------- */
+.coverage-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;}
+
+/* ---------- Charts ---------- */
+.chart-legend{display:flex;gap:14px;font-size:11px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
+.chart-legend .lg-item{display:flex;align-items:center;gap:5px;}
+
+/* ---------- Forms / Modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(12,22,28,.5);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+}
+.modal{
+  background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+  box-shadow:var(--shadow-md);
+}
+.modal-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:var(--font-display);font-size:16px;font-weight:600;}
+.modal-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--ink-faint);line-height:1;padding:4px;}
+.modal-body{padding:18px 20px;}
+.modal-foot{display:flex;justify-content:space-between;gap:8px;padding:14px 20px;border-top:1px solid var(--border);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-field{display:flex;flex-direction:column;gap:5px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-family:var(--font-mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);}
+.form-field input,.form-field select,.form-field textarea{
+  font-family:var(--font-body);font-size:13px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:6px;background:var(--surface);color:var(--ink);
+  width:100%;
+}
+.form-field textarea{resize:vertical;min-height:60px;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+
+/* ---------- Scrollbar (subtle) ---------- */
+::-webkit-scrollbar{height:9px;width:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:6px;}
+
+.text-faint{color:var(--ink-faint);}
+.mt-0{margin-top:0;}
+.section-title{font-family:var(--font-display);font-size:19px;font-weight:600;margin:0 0 3px;}
+.section-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 18px;}
+.flex-between{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+
+a.link-reset,.link-reset{color:var(--accent);cursor:pointer;text-decoration:underline;font-weight:600;}
+
+@media (max-width:900px){
+  .sidebar{width:64px;flex:0 0 64px;}
+  .nav-label,.brand-name,.brand-sub,.nav-count,.nav-section-label{display:none;}
+  .sidebar-brand{justify-content:center;padding:0 0 14px;}
+  .form-grid{grid-template-columns:1fr;}
+  .panel-grid-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">VT</div>
+      <div>
+        <div class="brand-name">ValTrack</div>
+        <div class="brand-sub">Validation Control</div>
+      </div>
+    </div>
+    <div class="nav-section-label">Overview</div>
+    <ul class="nav-list" id="nav-top"></ul>
+    <div class="nav-section-label">Execute</div>
+    <ul class="nav-list" id="nav-mid"></ul>
+    <div class="nav-section-label">Plan</div>
+    <ul class="nav-list" id="nav-bot"></ul>
+    <div class="sidebar-foot">
+      <button class="sidebar-foot-btn" id="btn-reset-data">⟲ Reset sample data</button>
+      <button class="sidebar-foot-btn" id="btn-clear-data">⨯ Clear all data</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-title"><span class="eyebrow" id="topbar-eyebrow">GMP Validation</span><span id="topbar-title-text">Dashboard</span></div>
+      <div class="topbar-spacer"></div>
+      <select class="select" id="global-program-filter"></select>
+      <button class="btn btn-primary" id="btn-quick-add">+ New</button>
+    </header>
+    <div class="content" id="content">
+      <div class="view" id="view-dashboard"></div>
+      <div class="view" id="view-schedule"></div>
+      <div class="view" id="view-programs"></div>
+      <div class="view" id="view-requests"></div>
+      <div class="view" id="view-defects"></div>
+      <div class="view" id="view-scrubbing"></div>
+      <div class="view" id="view-coverage"></div>
+      <div class="view" id="view-reports"></div>
+    </div>
+  </div>
+</div>
+<div id="modal-root"></div>
+
+<script>
+/* =========================================================================
+   ICONS
+   ========================================================================= */
+const ICONS = {
+  dashboard:'<svg class="nav-icon" viewBox="0 0 20 20"><rect x="2.5" y="2.5" width="6" height="6" rx="1"/><rect x="11.5" y="2.5" width="6" height="6" rx="1"/><rect x="2.5" y="11.5" width="6" height="6" rx="1"/><rect x="11.5" y="11.5" width="6" height="6" rx="1"/></svg>',
+  schedule:'<svg class="nav-icon" viewBox="0 0 20 20"><rect x="2.5" y="4.5" width="15" height="3" rx="1"/><rect x="2.5" y="9.5" width="10" height="3" rx="1"/><rect x="2.5" y="14.5" width="12.5" height="3" rx="1"/></svg>',
+  programs:'<svg class="nav-icon" viewBox="0 0 20 20"><path d="M10 2.5 17.5 6.5 10 10.5 2.5 6.5Z"/><path d="M2.5 10.5 10 14.5 17.5 10.5"/><path d="M2.5 14.5 10 18.5 17.5 14.5"/></svg>',
+  requests:'<svg class="nav-icon" viewBox="0 0 20 20"><path d="M2.5 11.5 6 11.5 7.5 13.5H12.5L14 11.5H17.5"/><rect x="2.5" y="4.5" width="15" height="12" rx="1.5"/></svg>',
+  defects:'<svg class="nav-icon" viewBox="0 0 20 20"><path d="M10 2.5 18 16.5H2Z"/><path d="M10 8.2V12" stroke-linecap="round"/><circle cx="10" cy="14.3" r=".9" fill="currentColor" stroke="none"/></svg>',
+  scrubbing:'<svg class="nav-icon" viewBox="0 0 20 20"><rect x="2.5" y="3" width="4.2" height="14" rx="1"/><rect x="7.9" y="3" width="4.2" height="9" rx="1"/><rect x="13.3" y="3" width="4.2" height="11.5" rx="1"/></svg>',
+  coverage:'<svg class="nav-icon" viewBox="0 0 20 20"><path d="M10 2 17 4.5V9.5C17 13.5 14 16.5 10 18 6 16.5 3 13.5 3 9.5V4.5Z"/><path d="M6.7 10 9 12.3 13.3 8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  reports:'<svg class="nav-icon" viewBox="0 0 20 20"><path d="M2.5 17.5h15"/><rect x="4" y="10" width="3" height="6"/><rect x="8.5" y="6" width="3" height="10"/><rect x="13" y="12.5" width="3" height="3.5"/></svg>'
+};
+
+/* =========================================================================
+   STATE + STORAGE
+   ========================================================================= */
+let state = null;
+const STORE_KEY = 'valtrack-state-v1';
+
+async function loadState(){
+  try{
+    const res = await window.storage.get(STORE_KEY, false);
+    if(res && res.value){ state = JSON.parse(res.value); }
+    else { state = seedState(); await persist(); }
+  }catch(e){
+    console.warn('Storage unavailable, using in-memory state.', e);
+    state = seedState();
+  }
+  if(!state.filterProgram) state.filterProgram = 'all';
+  if(!state.reportSlice) state.reportSlice = 'monthly';
+  if(!state.activeTab) state.activeTab = 'dashboard';
+  renderAll();
+}
+async function persist(){
+  try{ await window.storage.set(STORE_KEY, JSON.stringify(state), false); }
+  catch(e){ console.warn('Could not persist state', e); }
+}
+function genId(prefix){
+  state._seq = (state._seq||0)+1;
+  return prefix+'-'+String(state._seq).padStart(4,'0');
+}
+
+/* =========================================================================
+   SEED DATA
+   ========================================================================= */
+function d(days){ // today + offset days -> yyyy-mm-dd
+  const t = new Date(TODAY); t.setDate(t.getDate()+days);
+  return t.toISOString().slice(0,10);
+}
+let TODAY = new Date().toISOString().slice(0,10);
+
+function seedState(){
+  const s = {
+    _seq: 0, filterProgram:'all', reportSlice:'monthly', activeTab:'dashboard',
+    programs:[], activities:[], defects:[], requests:[], coverage:[]
+  };
+  const P = (name,system,site,owner,phase,status,priority,start,end)=>{
+    const id = 'PRG-'+String(++s._seq).padStart(4,'0');
+    s.programs.push({id,name,system,site,owner,phase,status,priority,startDate:start,endDate:end});
+    return id;
+  };
+  const A = (programId,name,type,owner,status,start,end,pct,milestone)=>{
+    const id = 'ACT-'+String(++s._seq).padStart(4,'0');
+    s.activities.push({id,programId,name,type,owner,status,start,end,percentComplete:pct,milestone:!!milestone});
+    return id;
+  };
+  const D = (programId,activityId,title,description,severity,status,dateRaised,raisedBy,owner,capaRef,dateClosed)=>{
+    const id = 'DEF-'+String(++s._seq).padStart(4,'0');
+    s.defects.push({id,programId,activityId,title,description,severity,status,dateRaised,raisedBy,owner,capaRef:capaRef||'',dateClosed:dateClosed||''});
+  };
+  const R = (title,system,requestedBy,dateRequested,priority,justification,targetDate,scrubStage)=>{
+    const id = 'VR-'+String(++s._seq).padStart(4,'0');
+    s.requests.push({id,title,system,requestedBy,dateRequested,priority,justification,targetDate,scrubStage});
+  };
+  const C = (system,area,validationTypeRequired,status,lastValidatedDate,nextDueDate,programId)=>{
+    const id = 'COV-'+String(++s._seq).padStart(4,'0');
+    s.coverage.push({id,system,area,validationTypeRequired,status,lastValidatedDate,nextDueDate,programId:programId||''});
+  };
+
+  const p1 = P('Tablet Press Line 3 Requalification','Tablet Press TP-3','Bengaluru Plant 2','R. Iyer','OQ','In Progress','High', d(-45), d(45));
+  A(p1,'IQ Protocol Development','Protocol Development','R. Iyer','Complete', d(-45), d(-30), 100);
+  A(p1,'IQ Execution','IQ Execution','K. Shetty','Complete', d(-29), d(-20), 100);
+  A(p1,'OQ Protocol Development','Protocol Development','R. Iyer','Complete', d(-19), d(-4), 100);
+  A(p1,'OQ Execution','OQ Execution','K. Shetty','In Progress', d(-2), d(9), 55);
+  A(p1,'PQ Protocol Development','Protocol Development','R. Iyer','Not Started', d(11), d(19), 0);
+  A(p1,'PQ Execution','PQ Execution','K. Shetty','Not Started', d(21), d(33), 0);
+  A(p1,'Validation Summary Report','Report Review','R. Iyer','Not Started', d(35), d(41), 0, true);
+
+  const p2 = P('HVAC AHU-04 Performance Qualification','AHU-04 (Cleanroom B)','Bengaluru Plant 1','S. Menon','PQ','In Progress','Critical', d(-30), d(20));
+  A(p2,'IQ Execution','IQ Execution','S. Menon','Complete', d(-30), d(-20), 100);
+  A(p2,'OQ Execution','OQ Execution','S. Menon','In Progress', d(-8), d(-1), 80);
+  A(p2,'PQ Execution','PQ Execution','P. Das','Blocked', d(1), d(12), 15);
+  A(p2,'Report Review','Report Review','S. Menon','Not Started', d(14), d(19), 0, true);
+
+  const p3 = P('Autoclave STE-12 IQ/OQ/PQ','Autoclave STE-12','Hyderabad Plant','A. Verma','IQ','Not Started','Medium', d(17), d(70));
+  A(p3,'Protocol Development','Protocol Development','A. Verma','Not Started', d(17), d(26), 0);
+  A(p3,'IQ Execution','IQ Execution','A. Verma','Not Started', d(28), d(36), 0);
+  A(p3,'OQ Execution','OQ Execution','A. Verma','Not Started', d(38), d(48), 0);
+  A(p3,'PQ Execution','PQ Execution','A. Verma','Not Started', d(50), d(62), 0);
+
+  const p4 = P('Cleaning Validation — Granulation Suite','Granulation Suite GS-2','Bengaluru Plant 2','R. Iyer','PQ','Complete','Medium', d(-90), d(-25));
+  A(p4,'Cleaning Protocol Development','Protocol Development','R. Iyer','Complete', d(-90), d(-75), 100);
+  A(p4,'Cleaning Verification Runs','PQ Execution','K. Shetty','Complete', d(-73), d(-40), 100);
+  A(p4,'Final Report','Report Review','R. Iyer','Complete', d(-38), d(-25), 100, true);
+
+  const p5 = P('Computerized System Validation — LIMS Upgrade','LIMS v9 (Corporate)','Corporate / All Sites','N. Rao','OQ','On Hold','High', d(-15), d(60));
+  A(p5,'Requirements Traceability','Protocol Development','N. Rao','In Progress', d(-15), d(2), 40);
+  A(p5,'OQ Execution','OQ Execution','N. Rao','Not Started', d(15), d(35), 0);
+
+  s.programs.push({id:'PRG-0000',_hidden:true}); s.programs.pop(); // no-op guard
+
+  D(p2,null,'AHU-04 pressure differential drift beyond ±0.02" WC during OQ run 3','Observed during OQ execution run 3 at cleanroom B entry door; pressure cascade dropped below acceptance limit for 6 minutes.','Critical','CAPA Assigned', d(-6), 'S. Menon','P. Das','CAPA-2201');
+  D(p2,null,'PQ pre-run BMS data log gap (14 min)','Building management system logger showed a 14-minute data gap during pre-run monitoring, root cause under investigation.','Major','In Review', d(-2), 'P. Das','P. Das');
+  D(p1,null,'OQ speed calibration reading exceeded tolerance at 45 RPM','Tablet press speed sensor reading deviated by 1.8% from reference tachometer at mid-range setpoint.','Major','Open', d(-1), 'K. Shetty','K. Shetty');
+  D(p1,null,'Minor label mismatch on OQ protocol cover sheet','Protocol revision number on cover sheet did not match footer; administrative correction only.','Minor','Closed', d(-15), 'R. Iyer','R. Iyer','','\''+d(-13));
+  D(p4,null,'Swab recovery study result borderline on stainless surface','Recovery percentage on coupon 4 was 68%, just above the 65% acceptance floor; flagged for trend review.','Minor','Closed', d(-60), 'K. Shetty','R. Iyer','', d(-55));
+  D(p5,null,'LIMS audit trail export missing user timestamp field','Discovered during requirements traceability review; export function does not currently capture timestamp metadata.','Major','Open', d(-4), 'N. Rao','N. Rao');
+  D(p3,null,'Autoclave chart recorder pending calibration certificate','Calibration certificate for chart recorder CR-9 not yet received from metrology; blocks protocol finalization.','Minor','Open', d(-3), 'A. Verma','A. Verma');
+  D(p2,null,'Deviation: OQ run 2 aborted due to power interruption','Site-wide power dip caused OQ run 2 to abort at minute 40; re-run required after root cause confirmed as external grid event.','Major','Closed', d(-11), 'S. Menon','S. Menon','', d(-9));
+  D(p1,null,'IQ punch tooling serial number discrepancy vs asset register','Two punch tooling serials recorded during IQ did not match the current asset register; register found outdated.','Minor','Closed', d(-27), 'K. Shetty','R. Iyer','', d(-24));
+  D(p2,null,'Critical: PQ smoke study shows turbulent airflow at pass-through','Unidirectional airflow visualization study showed turbulence near the material pass-through, risk to product exposure.','Critical','Open', d(0), 'P. Das','S. Menon');
+
+  R('Requalify Blister Pack Line BL-7 after motor replacement','Blister Pack Line BL-7','Site Engineering — Bengaluru P1', d(-5),'High','Drive motor replaced after bearing failure; OEM recommends full OQ re-verification before returning to GMP production.', d(30),'backlog');
+  R('New Freeze Dryer FD-2 — full IQ/OQ/PQ','Freeze Dryer FD-2','Capital Projects', d(-20),'Critical','New equipment installed under CAP-1187; required prior to first GMP batch, currently blocking site readiness milestone.', d(21),'scheduled');
+  R('Revalidate Purified Water Loop after piping modification','Purified Water Loop — Utility Bldg','Utilities — Hyderabad', d(-8),'High','Loop was rerouted to support new suite; sampling plan and OQ re-verification requested by Quality.', d(40),'underreview');
+  R('Cleaning validation — new API in Suite 4','Granulation Suite GS-4','Tech Transfer', d(-3),'Medium','New API introduced; matrix approach cleaning validation requested to cover worst-case product grouping.', d(60),'backlog');
+  R('CSV — Electronic Batch Record system minor version update','EBR System v4.2','IT / QA', d(-12),'Medium','Vendor patch addresses two minor defects; impact assessment requested to determine validation scope.', d(25),'approved');
+  R('Coating Pan CP-1 — periodic requalification (annual)','Coating Pan CP-1','Site Engineering — Bengaluru P2', d(-1),'Low','Annual periodic requalification due per VMP schedule; routine, low complexity.', d(50),'backlog');
+  R('Nitrogen generator N2-3 — OQ after filter change','Nitrogen Generator N2-3','Utilities — Bengaluru P1', d(-2),'Medium','Filtration skid replaced; partial OQ requested to confirm purity spec still met.', d(18),'underreview');
+  R('Vial Washer VW-2 — extend PQ to new vial size','Vial Washer VW-2','Product Development', d(-6),'High','New 10mL vial format introduced; PQ bracketing study requested to extend qualified range.', d(33),'approved');
+
+  C('Tablet Press TP-3','Process Equipment','IQ/OQ/PQ','In Progress', d(-90), d(45), p1);
+  C('AHU-04 (Cleanroom B)','Utility','IQ/OQ/PQ', 'In Progress', d(-200), d(20), p2);
+  C('Autoclave STE-12','Process Equipment','IQ/OQ/PQ','Not Started', d(-370), d(70), p3);
+  C('Granulation Suite GS-2','Cleaning','Cleaning Validation','Validated', d(-25), d(340), p4);
+  C('LIMS v9 (Corporate)','Computerized System','CSV','In Progress', d(-15), d(60), p5);
+  C('Blister Pack Line BL-7','Process Equipment','OQ (post-repair)','Revalidation Due', d(-400), d(-10));
+  C('Purified Water Loop — Utility Bldg','Utility','OQ (post-modification)','Revalidation Due', d(-500), d(-2));
+  C('Coating Pan CP-1','Process Equipment','Periodic Requalification','Revalidation Due', d(-370), d(-5));
+  C('Freeze Dryer FD-2','Process Equipment','IQ/OQ/PQ','Not Started','', d(21));
+  C('EBR System v4.2','Computerized System','CSV (Impact Assessment)','Not Started','', d(25));
+  C('Coating Pan CP-4','Process Equipment','Periodic Requalification','Validated', d(-100), d(265));
+  C('Compression Air System — Plant 1','Utility','OQ','Validated', d(-150), d(215));
+
+  return s;
+}
+
+/* =========================================================================
+   HELPERS
+   ========================================================================= */
+function byId(arr,id){return arr.find(x=>x.id===id);}
+function fmtDate(str){
+  if(!str) return '—';
+  const dt = new Date(str+'T00:00:00');
+  if(isNaN(dt)) return str;
+  return dt.toLocaleDateString('en-US',{day:'2-digit',month:'short',year:'numeric'});
+}
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function clampPct(n){ return Math.max(0,Math.min(100, n||0)); }
+
+function severityBadge(sev){
+  const map = {Critical:'badge-red',Major:'badge-amber',Minor:'badge-gray'};
+  return `<span class="badge ${map[sev]||'badge-gray'}">${sev}</span>`;
+}
+function defectStatusBadge(st){
+  const map = {Open:'badge-red','In Review':'badge-amber','CAPA Assigned':'badge-blue',Closed:'badge-green'};
+  return `<span class="badge ${map[st]||'badge-gray'}">${st}</span>`;
+}
+function programStatusBadge(st){
+  const map = {'Not Started':'badge-gray','In Progress':'badge-blue','On Hold':'badge-amber',Complete:'badge-green'};
+  return `<span class="badge ${map[st]||'badge-gray'}">${st}</span>`;
+}
+function priorityBadge(p){
+  const map = {Critical:'badge-red',High:'badge-amber',Medium:'badge-blue',Low:'badge-gray'};
+  return `<span class="badge ${map[p]||'badge-gray'}">${p}</span>`;
+}
+function activityStatusBadge(st){
+  const map = {'Not Started':'badge-gray','In Progress':'badge-blue',Complete:'badge-green',Blocked:'badge-red'};
+  return `<span class="badge ${map[st]||'badge-gray'}">${st}</span>`;
+}
+function coverageStatusBadge(st){
+  const map = {'Not Started':'badge-gray','In Progress':'badge-blue',Validated:'badge-green','Revalidation Due':'badge-red','Overdue':'badge-red'};
+  return `<span class="badge ${map[st]||'badge-gray'}">${st}</span>`;
+}
+function scrubStageLabel(s){
+  return {backlog:'Backlog',underreview:'Under Review',approved:'Approved',scheduled:'Scheduled',done:'Done'}[s]||s;
+}
+function programName(id){ const p=byId(state.programs,id); return p?p.name:'—'; }
+function programOptions(selectedId,includeNone){
+  let out = includeNone? `<option value="">— None —</option>` : '';
+  out += state.programs.map(p=>`<option value="${p.id}" ${p.id===selectedId?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  return out;
+}
+function escapeHtml(str){
+  if(str===undefined||str===null) return '';
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function filteredProgIds(){
+  if(state.filterProgram==='all') return state.programs.map(p=>p.id);
+  return [state.filterProgram];
+}
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+const NAV = [
+  {group:'nav-top', items:[
+    {key:'dashboard', label:'Dashboard', icon:'dashboard'},
+  ]},
+  {group:'nav-mid', items:[
+    {key:'schedule', label:'Schedule', icon:'schedule'},
+    {key:'programs', label:'Programs', icon:'programs'},
+    {key:'requests', label:'Validation Requests', icon:'requests', ledFn: s=> s.requests.filter(r=>r.scrubStage==='backlog').length },
+    {key:'defects', label:'Defects & Deviations', icon:'defects', ledFn: s=> s.defects.filter(x=>x.severity==='Critical' && x.status!=='Closed').length, ledColor:'on-red' },
+    {key:'scrubbing', label:'Scrubbing Board', icon:'scrubbing'},
+  ]},
+  {group:'nav-bot', items:[
+    {key:'coverage', label:'Coverage Planning', icon:'coverage', ledFn: s=> s.coverage.filter(c=>c.status==='Revalidation Due'||c.status==='Overdue').length, ledColor:'on-amber' },
+    {key:'reports', label:'Reports', icon:'reports'},
+  ]}
+];
+const TAB_TITLES = {
+  dashboard:['Overview','Program Dashboard'],
+  schedule:['Execute','Validation Schedule'],
+  programs:['Execute','Validation Programs'],
+  requests:['Execute','Validation Requests'],
+  defects:['Execute','Defects & Deviations'],
+  scrubbing:['Execute','Scrubbing Board'],
+  coverage:['Plan','Scope & Coverage Planning'],
+  reports:['Plan','Reports']
+};
+
+function renderNav(){
+  NAV.forEach(section=>{
+    const ul = document.getElementById(section.group);
+    ul.innerHTML = section.items.map(item=>{
+      let led = '<span class="nav-led off"></span>';
+      if(item.ledFn){
+        const n = item.ledFn(state);
+        if(n>0) led = `<span class="nav-led ${item.ledColor||'on-teal'}"></span><span class="nav-count">${n}</span>`;
+      }
+      return `<li class="nav-item ${state.activeTab===item.key?'active':''}" data-nav="${item.key}">
+        ${ICONS[item.icon]}<span class="nav-label">${item.label}</span>${led}
+      </li>`;
+    }).join('');
+  });
+  document.querySelectorAll('[data-nav]').forEach(el=>{
+    el.onclick = ()=>{ state.activeTab = el.dataset.nav; persist(); renderAll(); };
+  });
+}
+
+function renderTopbar(){
+  const [eyebrow,title] = TAB_TITLES[state.activeTab];
+  document.getElementById('topbar-eyebrow').textContent = eyebrow;
+  document.getElementById('topbar-title-text').textContent = title;
+  const sel = document.getElementById('global-program-filter');
+  sel.innerHTML = `<option value="all">All Programs</option>` + state.programs.map(p=>`<option value="${p.id}" ${state.filterProgram===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
+  sel.value = state.filterProgram;
+  sel.onchange = ()=>{ state.filterProgram = sel.value; persist(); renderAll(); };
+
+  document.getElementById('btn-quick-add').onclick = ()=>{
+    const map = {dashboard:'program',schedule:'activity',programs:'program',requests:'request',defects:'defect',scrubbing:'request',coverage:'coverage',reports:'program'};
+    openModal(map[state.activeTab]||'program');
+  };
+}
+
+/* =========================================================================
+   RENDER DISPATCH
+   ========================================================================= */
+function renderAll(){
+  renderNav();
+  renderTopbar();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+state.activeTab).classList.add('active');
+  ({
+    dashboard: renderDashboard, schedule: renderSchedule, programs: renderPrograms,
+    requests: renderRequests, defects: renderDefects, scrubbing: renderScrubbing,
+    coverage: renderCoverage, reports: renderReports
+  })[state.activeTab]();
+}
+
+/* =========================================================================
+   DASHBOARD
+   ========================================================================= */
+function renderDashboard(){
+  const el = document.getElementById('view-dashboard');
+  const progs = state.programs;
+  const activePrograms = progs.filter(p=>p.status==='In Progress').length;
+  const openDefects = state.defects.filter(x=>x.status!=='Closed');
+  const criticalDefects = openDefects.filter(x=>x.severity==='Critical').length;
+  const pendingRequests = state.requests.filter(r=>r.scrubStage!=='done').length;
+  const overdueCoverage = state.coverage.filter(c=>c.status==='Revalidation Due'||c.status==='Overdue').length;
+
+  const upcoming = state.activities
+    .filter(a=>a.status!=='Complete' && daysBetween(TODAY,a.start)<=14 && daysBetween(TODAY,a.end)>=-3)
+    .sort((a,b)=> a.start.localeCompare(b.start)).slice(0,7);
+
+  const recentDefects = [...state.defects].sort((a,b)=> b.dateRaised.localeCompare(a.dateRaised)).slice(0,6);
+
+  el.innerHTML = `
+    <h1 class="section-title">Program Dashboard</h1>
+    <p class="section-sub">Live status across all equipment and process validation programs.</p>
+
+    <div class="kpi-grid">
+      <div class="kpi-card corner-frame">
+        <div class="kpi-label">Programs</div>
+        <div class="kpi-value">${progs.length}</div>
+        <div class="kpi-foot">${activePrograms} in progress</div>
+      </div>
+      <div class="kpi-card corner-frame">
+        <div class="kpi-label">Open Defects / Deviations</div>
+        <div class="kpi-value">${openDefects.length}</div>
+        <div class="kpi-foot ${criticalDefects>0?'warn':'good'}">${criticalDefects} critical, unresolved</div>
+      </div>
+      <div class="kpi-card corner-frame">
+        <div class="kpi-label">Pending Validation Requests</div>
+        <div class="kpi-value">${pendingRequests}</div>
+        <div class="kpi-foot">${state.requests.filter(r=>r.scrubStage==='backlog').length} awaiting scrub</div>
+      </div>
+      <div class="kpi-card corner-frame">
+        <div class="kpi-label">Coverage Items Due</div>
+        <div class="kpi-value">${overdueCoverage}<span class="unit">/ ${state.coverage.length}</span></div>
+        <div class="kpi-foot ${overdueCoverage>0?'warn':'good'}">${overdueCoverage>0? 'need revalidation' : 'all on schedule'}</div>
+      </div>
+    </div>
+
+    <div class="panel-grid-2">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Upcoming activities</span><span class="panel-sub">next 14 days</span></div>
+        <div class="panel-body">
+          ${upcoming.length? `<div class="table-scroll"><table><thead><tr><th>Activity</th><th>Program</th><th>Type</th><th>Window</th><th>Status</th></tr></thead><tbody>
+            ${upcoming.map(a=>`<tr>
+              <td class="cell-strong">${escapeHtml(a.name)}</td>
+              <td class="text-faint">${escapeHtml(programName(a.programId))}</td>
+              <td class="cell-mono">${escapeHtml(a.type)}</td>
+              <td class="cell-mono">${fmtDate(a.start)} → ${fmtDate(a.end)}</td>
+              <td>${activityStatusBadge(a.status)}</td>
+            </tr>`).join('')}
+          </tbody></table></div>`
+          : `<div class="empty-state"><div class="empty-state-title">Nothing scheduled soon</div><p>No open activities fall in the next 14 days.</p></div>`}
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Recent defects & deviations</span></div>
+        <div class="panel-body">
+          ${recentDefects.map(x=>`
+            <div style="padding:9px 0;border-bottom:1px solid var(--border);">
+              <div class="flex-between" style="margin-bottom:3px;">
+                <span style="font-weight:600;font-size:12px;">${escapeHtml(x.title)}</span>
+              </div>
+              <div class="flex-between">
+                <span class="text-faint" style="font-size:11px;">${escapeHtml(programName(x.programId))} · ${fmtDate(x.dateRaised)}</span>
+                <span>${severityBadge(x.severity)}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Program status overview</span></div>
+      <div class="panel-body">
+        ${progs.map(p=>{
+          const acts = state.activities.filter(a=>a.programId===p.id);
+          const pct = acts.length? Math.round(acts.reduce((s,a)=>s+clampPct(a.percentComplete),0)/acts.length) : 0;
+          return `<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+            <div class="flex-between" style="margin-bottom:6px;">
+              <span style="font-weight:600;font-size:12.5px;">${escapeHtml(p.name)}</span>
+              <span style="display:flex;gap:6px;">${programStatusBadge(p.status)}${priorityBadge(p.priority)}</span>
+            </div>
+            <div class="progress-row"><div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div><span class="progress-pct">${pct}%</span></div>
+          </div>`;
+        }).join('') || `<div class="empty-state"><div class="empty-state-title">No programs yet</div><p>Create a validation program to get started.</p></div>`}
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   GANTT / SCHEDULE
+   ========================================================================= */
+function renderSchedule(){
+  const el = document.getElementById('view-schedule');
+  const progIds = filteredProgIds();
+  const acts = state.activities.filter(a=>progIds.includes(a.programId));
+
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Validation Schedule</h1><p class="section-sub mt-0">Gantt view of qualification activities across selected programs.</p></div>
+      <button class="btn btn-primary" id="btn-add-activity">+ Add Activity</button>
+    </div>
+    <div class="gantt-legend" style="margin-bottom:12px;">
+      <span class="lg-item"><span class="lg-swatch" style="background:var(--status-gray);"></span>Not started</span>
+      <span class="lg-item"><span class="lg-swatch" style="background:var(--status-blue);"></span>In progress</span>
+      <span class="lg-item"><span class="lg-swatch" style="background:var(--status-green);"></span>Complete</span>
+      <span class="lg-item"><span class="lg-swatch" style="background:var(--status-red);"></span>Blocked</span>
+      <span class="lg-item"><span class="lg-swatch" style="background:repeating-linear-gradient(45deg,var(--status-amber),var(--status-amber) 4px,#D8A24F 4px,#D8A24F 8px);"></span>At risk (past due, not done)</span>
+      <span class="lg-item"><span class="lg-swatch" style="background:var(--accent-dark);transform:rotate(45deg);border-radius:2px;"></span>Milestone</span>
+    </div>
+    <div class="panel gantt-panel corner-frame" id="gantt-mount"></div>
+  `;
+  document.getElementById('btn-add-activity').onclick = ()=>openModal('activity');
+  buildGantt(document.getElementById('gantt-mount'), acts);
+}
+
+function buildGantt(mount, acts){
+  if(!acts.length){
+    mount.innerHTML = `<div class="empty-state"><div class="empty-state-title">No activities to schedule</div><p>Add a validation activity, or switch the program filter.</p></div>`;
+    return;
+  }
+  const dayWidth = 12;
+  const rowH = 36, headerH = 46, groupH = 28;
+
+  let minStart = acts.reduce((m,a)=> a.start<m?a.start:m, acts[0].start);
+  let maxEnd = acts.reduce((m,a)=> a.end>m?a.end:m, acts[0].end);
+  // pad range
+  minStart = d3add(minStart,-7); maxEnd = d3add(maxEnd,14);
+  if(daysBetween(TODAY,maxEnd) < 10) maxEnd = d3add(TODAY,20);
+  if(daysBetween(minStart,TODAY) < 10) minStart = d3add(TODAY,-20);
+
+  const totalDays = Math.max(30, daysBetween(minStart,maxEnd));
+  const totalWidth = totalDays*dayWidth;
+  const xOf = (dateStr)=> daysBetween(minStart,dateStr)*dayWidth;
+
+  // group by program, preserve program order
+  const progIds = [...new Set(acts.map(a=>a.programId))];
+  let bodyHeight = 0;
+  let labelsHtml = '';
+  let tracksHtml = '';
+  let rowIndex = 0;
+
+  progIds.forEach(pid=>{
+    const p = byId(state.programs,pid);
+    labelsHtml += `<div class="gantt-label-group">${escapeHtml(p?p.name:'Unassigned')}</div>`;
+    tracksHtml += `<div class="gantt-group-spacer" style="width:${totalWidth}px;"></div>`;
+    bodyHeight += groupH;
+    const rows = acts.filter(a=>a.programId===pid);
+    rows.forEach(a=>{
+      labelsHtml += `<div class="gantt-label-row" data-act="${a.id}">
+          <span class="lbl-name">${escapeHtml(a.name)}</span>
+          <span class="lbl-meta">${escapeHtml(a.type)} · ${escapeHtml(a.owner||'—')}</span>
+        </div>`;
+      const x = xOf(a.start);
+      const w = Math.max(dayWidth*1.2, xOf(a.end)-x);
+      let cls = 'bar-scheduled';
+      if(a.status==='Complete') cls='bar-done';
+      else if(a.status==='Blocked') cls='bar-blocked';
+      else if(a.status==='In Progress') cls='bar-inprogress';
+      else if(a.status==='Not Started' && a.end < TODAY) cls='bar-atrisk';
+      const labelInside = w>70;
+      if(a.milestone){
+        tracksHtml += `<div class="gantt-track-row" style="width:${totalWidth}px;" data-act="${a.id}">
+          <div class="gantt-milestone" style="left:${x-3}px;" data-act="${a.id}" title="${escapeHtml(a.name)}"></div>
+        </div>`;
+      } else {
+        tracksHtml += `<div class="gantt-track-row" style="width:${totalWidth}px;" data-act="${a.id}">
+          <div class="gantt-bar ${cls}" style="left:${x}px;width:${w}px;" data-act="${a.id}" title="${escapeHtml(a.name)} (${a.percentComplete||0}%)">
+            <span class="gantt-bar-label ${labelInside?'':'outside'}" style="${labelInside?'':`margin-left:${w+6}px;color:var(--ink);`}">${escapeHtml(a.name)}</span>
+          </div>
+        </div>`;
+      }
+      rowIndex++; bodyHeight += rowH;
+    });
+  });
+
+  // month header segments
+  let monthsHtml = '';
+  let cursor = new Date(minStart+'T00:00:00');
+  cursor.setDate(1);
+  while(cursor.toISOString().slice(0,10) < maxEnd){
+    const segStart = cursor.toISOString().slice(0,10) < minStart ? minStart : cursor.toISOString().slice(0,10);
+    const next = new Date(cursor); next.setMonth(next.getMonth()+1);
+    const segEndDate = next.toISOString().slice(0,10) > maxEnd ? maxEnd : next.toISOString().slice(0,10);
+    const left = xOf(segStart);
+    const width = Math.max(0, xOf(segEndDate)-left);
+    monthsHtml += `<div class="gantt-month-seg" style="left:${left}px;width:${width}px;">${cursor.toLocaleDateString('en-US',{month:'short',year:'2-digit'})}</div>`;
+    cursor = next;
+  }
+
+  const todayX = xOf(TODAY);
+  const todayHtml = (todayX>=0 && todayX<=totalWidth) ? `<div class="gantt-today" style="left:${todayX}px;height:${headerH+bodyHeight}px;"><span class="gantt-today-flag">TODAY</span></div>` : '';
+
+  mount.innerHTML = `
+    <div class="gantt-body">
+      <div class="gantt-labels">
+        <div class="gantt-label-header">Activity</div>
+        ${labelsHtml}
+      </div>
+      <div class="gantt-timeline-scroll">
+        <div class="gantt-timeline-inner" style="width:${totalWidth}px;">
+          <div class="gantt-month-header" style="width:${totalWidth}px;">${monthsHtml}</div>
+          ${tracksHtml}
+          ${todayHtml}
+        </div>
+      </div>
+    </div>
+  `;
+  mount.querySelectorAll('[data-act]').forEach(elx=>{
+    elx.addEventListener('click', ()=> openModal('activity', elx.dataset.act));
+  });
+}
+function d3add(dateStr,days){ const t=new Date(dateStr+'T00:00:00'); t.setDate(t.getDate()+days); return t.toISOString().slice(0,10); }
+
+/* =========================================================================
+   PROGRAMS
+   ========================================================================= */
+function renderPrograms(){
+  const el = document.getElementById('view-programs');
+  const progIds = filteredProgIds();
+  const progs = state.programs.filter(p=>progIds.includes(p.id));
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Validation Programs</h1><p class="section-sub mt-0">${progs.length} program${progs.length===1?'':'s'} tracked. Click a card to view its schedule.</p></div>
+      <button class="btn btn-primary" id="btn-add-program">+ New Program</button>
+    </div>
+    <div class="program-grid">
+      ${progs.map(p=>{
+        const acts = state.activities.filter(a=>a.programId===p.id);
+        const pct = acts.length? Math.round(acts.reduce((s,a)=>s+clampPct(a.percentComplete),0)/acts.length) : 0;
+        const openDef = state.defects.filter(x=>x.programId===p.id && x.status!=='Closed').length;
+        return `<div class="program-card" data-open="${p.id}">
+          <div class="program-card-top">
+            <div class="program-card-name">${escapeHtml(p.name)}</div>
+            ${priorityBadge(p.priority)}
+          </div>
+          <div class="program-card-meta">${escapeHtml(p.system||'—')} <span>·</span> ${escapeHtml(p.site||'—')}<br>Owner: ${escapeHtml(p.owner||'—')} <span>· Phase ${escapeHtml(p.phase||'—')}</span></div>
+          <div class="progress-row"><div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div><span class="progress-pct">${pct}%</span></div>
+          <div class="program-card-foot">
+            <span>${programStatusBadge(p.status)}</span>
+            <span>${openDef>0? `${openDef} open defect${openDef===1?'':'s'}`:'no open defects'}</span>
+          </div>
+        </div>`;
+      }).join('') || `<div class="empty-state"><div class="empty-state-title">No programs match this filter</div><p>Try "All Programs" or create a new one.</p></div>`}
+    </div>
+  `;
+  document.getElementById('btn-add-program').onclick = ()=>openModal('program');
+  el.querySelectorAll('[data-open]').forEach(c=>{
+    c.onclick = ()=>openModal('program', c.dataset.open);
+  });
+}
+
+/* =========================================================================
+   VALIDATION REQUESTS
+   ========================================================================= */
+function renderRequests(){
+  const el = document.getElementById('view-requests');
+  const reqs = [...state.requests].sort((a,b)=> b.dateRequested.localeCompare(a.dateRequested));
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Validation Requests</h1><p class="section-sub mt-0">Intake for new and revised validation work before it's scheduled.</p></div>
+      <button class="btn btn-primary" id="btn-add-request">+ New Request</button>
+    </div>
+    <div class="panel">
+      <div class="table-scroll"><table>
+        <thead><tr><th>ID</th><th>Request</th><th>System</th><th>Requested by</th><th>Date</th><th>Priority</th><th>Target</th><th>Stage</th><th></th></tr></thead>
+        <tbody>
+          ${reqs.map(r=>`<tr data-open="${r.id}" style="cursor:pointer;">
+            <td class="cell-mono">${r.id}</td>
+            <td class="cell-strong">${escapeHtml(r.title)}</td>
+            <td>${escapeHtml(r.system)}</td>
+            <td>${escapeHtml(r.requestedBy)}</td>
+            <td class="cell-mono">${fmtDate(r.dateRequested)}</td>
+            <td>${priorityBadge(r.priority)}</td>
+            <td class="cell-mono">${fmtDate(r.targetDate)}</td>
+            <td><span class="badge badge-blue">${scrubStageLabel(r.scrubStage)}</span></td>
+            <td class="row-actions"><button class="btn btn-sm btn-ghost" data-edit="${r.id}">Edit</button></td>
+          </tr>`).join('') || `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-title">No validation requests yet</div><p>Log an incoming request to start scoping it.</p></div></td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+  document.getElementById('btn-add-request').onclick = ()=>openModal('request');
+  el.querySelectorAll('[data-open]').forEach(row=>{
+    row.onclick = (e)=>{ if(e.target.closest('[data-edit]')) return; openModal('request', row.dataset.open); };
+  });
+  el.querySelectorAll('[data-edit]').forEach(b=>{
+    b.onclick = (e)=>{ e.stopPropagation(); openModal('request', b.dataset.edit); };
+  });
+}
+
+/* =========================================================================
+   DEFECTS & DEVIATIONS
+   ========================================================================= */
+function renderDefects(){
+  const el = document.getElementById('view-defects');
+  if(!state._defFilters) state._defFilters = {severity:'all', status:'all'};
+  const f = state._defFilters;
+  const progIds = filteredProgIds();
+  let defs = state.defects.filter(x=>progIds.includes(x.programId));
+  if(f.severity!=='all') defs = defs.filter(x=>x.severity===f.severity);
+  if(f.status!=='all') defs = defs.filter(x=>x.status===f.status);
+  defs = [...defs].sort((a,b)=> b.dateRaised.localeCompare(a.dateRaised));
+
+  const openCount = state.defects.filter(x=>progIds.includes(x.programId) && x.status!=='Closed').length;
+
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Defects & Deviations</h1><p class="section-sub mt-0">${openCount} open across the current program filter.</p></div>
+      <button class="btn btn-primary" id="btn-add-defect">+ Log Defect</button>
+    </div>
+    <div class="filter-bar">
+      <select class="select" id="f-severity">
+        <option value="all">All severities</option>
+        <option value="Critical">Critical</option>
+        <option value="Major">Major</option>
+        <option value="Minor">Minor</option>
+      </select>
+      <select class="select" id="f-status">
+        <option value="all">All statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Review">In Review</option>
+        <option value="CAPA Assigned">CAPA Assigned</option>
+        <option value="Closed">Closed</option>
+      </select>
+    </div>
+    <div class="panel">
+      <div class="table-scroll"><table>
+        <thead><tr><th>ID</th><th>Title</th><th>Program</th><th>Severity</th><th>Status</th><th>Raised</th><th>Owner</th><th>CAPA</th></tr></thead>
+        <tbody>
+          ${defs.map(x=>`<tr data-open="${x.id}" style="cursor:pointer;">
+            <td class="cell-mono">${x.id}</td>
+            <td class="cell-strong">${escapeHtml(x.title)}</td>
+            <td class="text-faint">${escapeHtml(programName(x.programId))}</td>
+            <td>${severityBadge(x.severity)}</td>
+            <td>${defectStatusBadge(x.status)}</td>
+            <td class="cell-mono">${fmtDate(x.dateRaised)}</td>
+            <td>${escapeHtml(x.owner||'—')}</td>
+            <td class="cell-mono">${escapeHtml(x.capaRef||'—')}</td>
+          </tr>`).join('') || `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-title">No defects match this filter</div><p>Adjust filters or log a new defect.</p></div></td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+  document.getElementById('f-severity').value = f.severity;
+  document.getElementById('f-status').value = f.status;
+  document.getElementById('f-severity').onchange = e=>{ f.severity=e.target.value; renderDefects(); };
+  document.getElementById('f-status').onchange = e=>{ f.status=e.target.value; renderDefects(); };
+  document.getElementById('btn-add-defect').onclick = ()=>openModal('defect');
+  el.querySelectorAll('[data-open]').forEach(row=>{
+    row.onclick = ()=>openModal('defect', row.dataset.open);
+  });
+}
+
+/* =========================================================================
+   SCRUBBING BOARD (kanban)
+   ========================================================================= */
+const SCRUB_COLS = [
+  {key:'backlog', label:'Backlog'},
+  {key:'underreview', label:'Under Review'},
+  {key:'approved', label:'Approved'},
+  {key:'scheduled', label:'Scheduled'},
+  {key:'done', label:'Done'}
+];
+function renderScrubbing(){
+  const el = document.getElementById('view-scrubbing');
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Scrubbing Board</h1><p class="section-sub mt-0">Drag requests across stages as they're reviewed, approved, and scheduled.</p></div>
+      <button class="btn btn-primary" id="btn-add-request-2">+ New Request</button>
+    </div>
+    <div class="kanban-board">
+      ${SCRUB_COLS.map(col=>{
+        const items = state.requests.filter(r=>r.scrubStage===col.key);
+        return `<div class="kanban-col" data-col="${col.key}">
+          <div class="kanban-col-header"><span class="kanban-col-title">${col.label}</span><span class="kanban-col-count">${items.length}</span></div>
+          <div class="kanban-drop" data-col="${col.key}" style="min-height:60px;">
+            ${items.map(r=>`<div class="kanban-card" draggable="true" data-req="${r.id}">
+              <div class="kanban-card-title">${escapeHtml(r.title)}</div>
+              <div class="kanban-card-meta">
+                ${priorityBadge(r.priority)}
+                <span class="kanban-card-sys">${fmtDate(r.targetDate)}</span>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+  document.getElementById('btn-add-request-2').onclick = ()=>openModal('request');
+
+  let dragId = null;
+  el.querySelectorAll('.kanban-card').forEach(card=>{
+    card.addEventListener('dragstart', e=>{ dragId = card.dataset.req; e.dataTransfer.effectAllowed='move'; });
+    card.addEventListener('click', ()=> openModal('request', card.dataset.req));
+  });
+  el.querySelectorAll('.kanban-col').forEach(col=>{
+    col.addEventListener('dragover', e=>{ e.preventDefault(); col.classList.add('drag-active'); });
+    col.addEventListener('dragleave', ()=> col.classList.remove('drag-active'));
+    col.addEventListener('drop', e=>{
+      e.preventDefault(); col.classList.remove('drag-active');
+      if(!dragId) return;
+      const r = byId(state.requests, dragId);
+      if(r){ r.scrubStage = col.dataset.col; persist(); renderScrubbing(); renderNav(); }
+      dragId = null;
+    });
+  });
+}
+
+/* =========================================================================
+   COVERAGE PLANNING
+   ========================================================================= */
+function renderCoverage(){
+  const el = document.getElementById('view-coverage');
+  const progIds = filteredProgIds();
+  let items = state.coverage.filter(c=> !c.programId || progIds.includes(c.programId));
+  items = [...items].sort((a,b)=> (a.nextDueDate||'9999').localeCompare(b.nextDueDate||'9999'));
+  const dueSoon = items.filter(c=>c.nextDueDate && daysBetween(TODAY,c.nextDueDate)<=30 && daysBetween(TODAY,c.nextDueDate)>=0).length;
+  const overdue = items.filter(c=>c.status==='Revalidation Due'||c.status==='Overdue').length;
+
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div><h1 class="section-title">Scope & Coverage Planning</h1><p class="section-sub mt-0">Which systems require validation, current status, and when they're next due.</p></div>
+      <button class="btn btn-primary" id="btn-add-coverage">+ Add Coverage Item</button>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Systems tracked</div><div class="kpi-value">${items.length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Due within 30 days</div><div class="kpi-value">${dueSoon}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Revalidation overdue</div><div class="kpi-value">${overdue}</div></div>
+    </div>
+    <div class="panel">
+      <div class="table-scroll"><table>
+        <thead><tr><th>System / Equipment</th><th>Area</th><th>Validation type</th><th>Status</th><th>Last validated</th><th>Next due</th><th>Program</th></tr></thead>
+        <tbody>
+          ${items.map(c=>{
+            const dueColor = {'Not Started':'var(--status-gray)','In Progress':'var(--status-blue)',Validated:'var(--status-green)','Revalidation Due':'var(--status-red)',Overdue:'var(--status-red)'}[c.status]||'var(--status-gray)';
+            return `<tr data-open="${c.id}" style="cursor:pointer;">
+            <td class="cell-strong"><span class="coverage-status-dot" style="background:${dueColor};"></span>${escapeHtml(c.system)}</td>
+            <td>${escapeHtml(c.area)}</td>
+            <td class="cell-mono">${escapeHtml(c.validationTypeRequired)}</td>
+            <td>${coverageStatusBadge(c.status)}</td>
+            <td class="cell-mono">${fmtDate(c.lastValidatedDate)}</td>
+            <td class="cell-mono">${fmtDate(c.nextDueDate)}</td>
+            <td class="text-faint">${c.programId? escapeHtml(programName(c.programId)) : '—'}</td>
+          </tr>`}).join('') || `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-title">No coverage items yet</div><p>Add every system or piece of equipment that needs validation.</p></div></td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+  document.getElementById('btn-add-coverage').onclick = ()=>openModal('coverage');
+  el.querySelectorAll('[data-open]').forEach(row=>{
+    row.onclick = ()=>openModal('coverage', row.dataset.open);
+  });
+}
+
+/* =========================================================================
+   REPORTS
+   ========================================================================= */
+function periodKey(dateStr, slice){
+  const dt = new Date(dateStr+'T00:00:00');
+  if(slice==='daily') return dateStr;
+  if(slice==='monthly') return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+  if(slice==='quarterly') return dt.getFullYear()+'-Q'+(Math.floor(dt.getMonth()/3)+1);
+  return String(dt.getFullYear());
+}
+function periodLabel(key, slice){
+  if(slice==='monthly'){ const [y,m]=key.split('-'); return new Date(y+'-'+m+'-01T00:00:00').toLocaleDateString('en-US',{month:'short',year:'2-digit'}); }
+  if(slice==='daily'){ return new Date(key+'T00:00:00').toLocaleDateString('en-US',{day:'2-digit',month:'short'}); }
+  return key;
+}
+function renderReports(){
+  const el = document.getElementById('view-reports');
+  if(!state.reportSlice) state.reportSlice = 'monthly';
+  const slice = state.reportSlice;
+  const progIds = filteredProgIds();
+
+  // default range: 6 periods back to 2 forward for monthly-ish; for daily use last 21 days
+  let rangeStart, rangeEnd;
+  if(slice==='daily'){ rangeStart = d3add(TODAY,-20); rangeEnd = d3add(TODAY,10); }
+  else if(slice==='monthly'){ rangeStart = d3add(TODAY,-150); rangeEnd = d3add(TODAY,60); }
+  else if(slice==='quarterly'){ rangeStart = d3add(TODAY,-330); rangeEnd = d3add(TODAY,180); }
+  else { rangeStart = d3add(TODAY,-730); rangeEnd = d3add(TODAY,365); }
+
+  const acts = state.activities.filter(a=>progIds.includes(a.programId));
+  const defs = state.defects.filter(x=>progIds.includes(x.programId));
+  const reqs = state.requests;
+
+  // build ordered period keys across range
+  const keys = [];
+  let cur = new Date(rangeStart+'T00:00:00');
+  const end = new Date(rangeEnd+'T00:00:00');
+  while(cur<=end){
+    const k = periodKey(cur.toISOString().slice(0,10), slice);
+    if(!keys.includes(k)) keys.push(k);
+    if(slice==='daily') cur.setDate(cur.getDate()+1);
+    else if(slice==='monthly') cur.setMonth(cur.getMonth()+1);
+    else if(slice==='quarterly') cur.setMonth(cur.getMonth()+3);
+    else cur.setFullYear(cur.getFullYear()+1);
+  }
+  const keysCapped = keys.length>24 ? keys.slice(keys.length-24) : keys;
+
+  const completedByPeriod = {}, plannedByPeriod = {}, raisedByPeriod = {}, closedByPeriod = {};
+  keysCapped.forEach(k=>{ completedByPeriod[k]=0; plannedByPeriod[k]=0; raisedByPeriod[k]=0; closedByPeriod[k]=0; });
+  acts.forEach(a=>{
+    const pk = periodKey(a.end, slice);
+    if(pk in plannedByPeriod) plannedByPeriod[pk]++;
+    if(a.status==='Complete' && pk in completedByPeriod) completedByPeriod[pk]++;
+  });
+  defs.forEach(x=>{
+    const rk = periodKey(x.dateRaised, slice);
+    if(rk in raisedByPeriod) raisedByPeriod[rk]++;
+    if(x.dateClosed){ const ck = periodKey(x.dateClosed, slice); if(ck in closedByPeriod) closedByPeriod[ck]++; }
+  });
+
+  const chart1 = groupedBarChart(keysCapped.map(k=>periodLabel(k,slice)), [
+    {name:'Planned to finish', color:'var(--status-gray)', values: keysCapped.map(k=>plannedByPeriod[k])},
+    {name:'Completed', color:'var(--status-green)', values: keysCapped.map(k=>completedByPeriod[k])}
+  ]);
+  const chart2 = groupedBarChart(keysCapped.map(k=>periodLabel(k,slice)), [
+    {name:'Raised', color:'var(--status-red)', values: keysCapped.map(k=>raisedByPeriod[k])},
+    {name:'Closed', color:'var(--status-green)', values: keysCapped.map(k=>closedByPeriod[k])}
+  ]);
+
+  const openBySeverity = ['Critical','Major','Minor'].map(sev=>({
+    sev, count: defs.filter(x=>x.severity===sev && x.status!=='Closed').length
+  }));
+
+  el.innerHTML = `
+    <div class="flex-between" style="margin-bottom:6px;">
+      <div><h1 class="section-title">Reports</h1><p class="section-sub mt-0">Program activity sliced by time period.</p></div>
+      <div class="segmented" id="slice-toggle">
+        <button data-slice="daily" class="${slice==='daily'?'active':''}">Daily</button>
+        <button data-slice="monthly" class="${slice==='monthly'?'active':''}">Monthly</button>
+        <button data-slice="quarterly" class="${slice==='quarterly'?'active':''}">Quarterly</button>
+        <button data-slice="yearly" class="${slice==='yearly'?'active':''}">Yearly</button>
+      </div>
+    </div>
+    <p class="text-faint" style="font-size:11.5px;margin-bottom:16px;">Showing ${fmtDate(rangeStart)} → ${fmtDate(rangeEnd)}, grouped ${slice}.</p>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Activities in range</div><div class="kpi-value">${acts.filter(a=>a.end>=rangeStart&&a.end<=rangeEnd).length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Defects raised in range</div><div class="kpi-value">${defs.filter(x=>x.dateRaised>=rangeStart&&x.dateRaised<=rangeEnd).length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Defects closed in range</div><div class="kpi-value">${defs.filter(x=>x.dateClosed&&x.dateClosed>=rangeStart&&x.dateClosed<=rangeEnd).length}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Requests received in range</div><div class="kpi-value">${reqs.filter(r=>r.dateRequested>=rangeStart&&r.dateRequested<=rangeEnd).length}</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Activities: planned vs. completed</span></div>
+      <div class="panel-body">${chart1}</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Defects & deviations: raised vs. closed</span></div>
+      <div class="panel-body">${chart2}</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Open defects by severity</span><span class="panel-sub">current, all programs in filter</span></div>
+      <div class="panel-body">
+        ${openBySeverity.map(o=>`<div style="margin-bottom:10px;">
+          <div class="flex-between" style="margin-bottom:4px;"><span style="font-size:12px;font-weight:600;">${o.sev}</span><span class="cell-mono">${o.count}</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,o.count*12)}%;background:${o.sev==='Critical'?'var(--status-red)':o.sev==='Major'?'var(--status-amber)':'var(--status-gray)'};"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
+  `;
+  el.querySelectorAll('#slice-toggle button').forEach(b=>{
+    b.onclick = ()=>{ state.reportSlice = b.dataset.slice; persist(); renderReports(); };
+  });
+}
+
+function groupedBarChart(categories, series){
+  const w = Math.max(560, categories.length*70);
+  const h = 210, padBottom = 26, padTop = 10;
+  const maxVal = Math.max(1, ...series.flatMap(s=>s.values));
+  const groupW = (w-40)/categories.length;
+  const barW = Math.min(22, (groupW-16)/series.length);
+  let bars = '';
+  categories.forEach((cat,i)=>{
+    const gx = 30 + i*groupW;
+    series.forEach((s,si)=>{
+      const val = s.values[i];
+      const barH = (val/maxVal)*(h-padBottom-padTop);
+      const bx = gx + si*(barW+4);
+      const by = h-padBottom-barH;
+      bars += `<rect x="${bx}" y="${by}" width="${barW}" height="${barH}" rx="2" fill="${s.color}"></rect>`;
+      if(val>0) bars += `<text x="${bx+barW/2}" y="${by-4}" font-size="9" text-anchor="middle" fill="var(--ink-faint)" font-family="IBM Plex Mono">${val}</text>`;
+    });
+    bars += `<text x="${gx+ (barW+4)*series.length/2 - 2}" y="${h-8}" font-size="9.5" text-anchor="middle" fill="var(--ink-soft)" font-family="IBM Plex Mono">${cat}</text>`;
+  });
+  const gridlines = [0,.25,.5,.75,1].map(f=>{
+    const y = h-padBottom-f*(h-padBottom-padTop);
+    return `<line x1="30" x2="${w-10}" y1="${y}" y2="${y}" stroke="var(--border)" stroke-width="1"></line>`;
+  }).join('');
+  const legend = `<div class="chart-legend">${series.map(s=>`<span class="lg-item"><span class="lg-swatch" style="background:${s.color};"></span>${s.name}</span>`).join('')}</div>`;
+  return `<div style="overflow-x:auto;"><svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${gridlines}${bars}</svg></div>${legend}`;
+}
+
+/* =========================================================================
+   MODAL / FORMS
+   ========================================================================= */
+const FIELD_CONFIG = {
+  program: [
+    {key:'name', label:'Program Name', type:'text', full:true, required:true},
+    {key:'system', label:'Equipment / System', type:'text'},
+    {key:'site', label:'Site', type:'text'},
+    {key:'owner', label:'Owner', type:'text'},
+    {key:'phase', label:'Current Phase', type:'select', options:['IQ','OQ','PQ','Requalification','Multiple / CSV']},
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','On Hold','Complete']},
+    {key:'priority', label:'Priority', type:'select', options:['Critical','High','Medium','Low']},
+    {key:'startDate', label:'Start Date', type:'date'},
+    {key:'endDate', label:'Target End Date', type:'date'}
+  ],
+  activity: [
+    {key:'programId', label:'Program', type:'programselect', full:true, required:true},
+    {key:'name', label:'Activity Name', type:'text', full:true, required:true},
+    {key:'type', label:'Type', type:'select', options:['Protocol Development','IQ Execution','OQ Execution','PQ Execution','Report Review','CAPA','Other']},
+    {key:'owner', label:'Owner', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Complete','Blocked']},
+    {key:'start', label:'Start Date', type:'date'},
+    {key:'end', label:'End Date', type:'date'},
+    {key:'percentComplete', label:'% Complete', type:'number'},
+    {key:'milestone', label:'Milestone?', type:'checkbox'}
+  ],
+  defect: [
+    {key:'programId', label:'Program', type:'programselect', full:true},
+    {key:'title', label:'Title', type:'text', full:true, required:true},
+    {key:'description', label:'Description', type:'textarea', full:true},
+    {key:'severity', label:'Severity', type:'select', options:['Critical','Major','Minor']},
+    {key:'status', label:'Status', type:'select', options:['Open','In Review','CAPA Assigned','Closed']},
+    {key:'dateRaised', label:'Date Raised', type:'date'},
+    {key:'raisedBy', label:'Raised By', type:'text'},
+    {key:'owner', label:'Owner', type:'text'},
+    {key:'capaRef', label:'CAPA Reference', type:'text'},
+    {key:'dateClosed', label:'Date Closed', type:'date'}
+  ],
+  request: [
+    {key:'title', label:'Request Title', type:'text', full:true, required:true},
+    {key:'system', label:'System / Equipment', type:'text', full:true},
+    {key:'requestedBy', label:'Requested By', type:'text'},
+    {key:'dateRequested', label:'Date Requested', type:'date'},
+    {key:'priority', label:'Priority', type:'select', options:['Critical','High','Medium','Low']},
+    {key:'targetDate', label:'Target Date', type:'date'},
+    {key:'justification', label:'Justification / Scope', type:'textarea', full:true},
+    {key:'scrubStage', label:'Stage', type:'select', options:['backlog','underreview','approved','scheduled','done'], optionLabels:{backlog:'Backlog',underreview:'Under Review',approved:'Approved',scheduled:'Scheduled',done:'Done'}}
+  ],
+  coverage: [
+    {key:'system', label:'System / Equipment', type:'text', full:true, required:true},
+    {key:'area', label:'Area', type:'select', options:['Process Equipment','Utility','Facility','Cleaning','Computerized System']},
+    {key:'validationTypeRequired', label:'Validation Type Required', type:'text'},
+    {key:'status', label:'Status', type:'select', options:['Not Started','In Progress','Validated','Revalidation Due','Overdue']},
+    {key:'lastValidatedDate', label:'Last Validated', type:'date'},
+    {key:'nextDueDate', label:'Next Due', type:'date'},
+    {key:'programId', label:'Linked Program (optional)', type:'programselect', full:true}
+  ]
+};
+const ENTITY_LABEL = {program:'Program',activity:'Activity',defect:'Defect / Deviation',request:'Validation Request',coverage:'Coverage Item'};
+const ENTITY_STORE = {program:'programs',activity:'activities',defect:'defects',request:'requests',coverage:'coverage'};
+const ENTITY_PREFIX = {program:'PRG',activity:'ACT',defect:'DEF',request:'VR',coverage:'COV'};
+
+function openModal(type, id){
+  const record = id ? byId(state[ENTITY_STORE[type]], id) : {};
+  const fields = FIELD_CONFIG[type];
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">${id?'Edit':'New'} ${ENTITY_LABEL[type]}</span>
+          <button class="modal-close" id="modal-close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            ${fields.map(f=>renderField(f, record)).join('')}
+          </div>
+        </div>
+        <div class="modal-foot">
+          <div>${id? `<button class="btn btn-ghost btn-danger" id="modal-delete">Delete</button>` : ''}</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
+            <button class="btn btn-primary" id="modal-save">${id?'Save Changes':'Create'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('modal-close').onclick = closeModal;
+  document.getElementById('modal-cancel').onclick = closeModal;
+  document.getElementById('modal-overlay').onclick = (e)=>{ if(e.target.id==='modal-overlay') closeModal(); };
+  if(id) document.getElementById('modal-delete').onclick = ()=>{
+    if(confirm('Delete this '+ENTITY_LABEL[type].toLowerCase()+'? This cannot be undone.')){
+      const arr = state[ENTITY_STORE[type]];
+      const idx = arr.findIndex(x=>x.id===id);
+      if(idx>-1) arr.splice(idx,1);
+      persist(); closeModal(); renderAll();
+    }
+  };
+  document.getElementById('modal-save').onclick = ()=> saveEntity(type, id, fields);
+}
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+
+function renderField(f, record){
+  const val = record[f.key];
+  const cls = f.full? 'form-field full' : 'form-field';
+  if(f.type==='select'){
+    const opts = f.options.map(o=>`<option value="${o}" ${o===val?'selected':''}>${f.optionLabels? f.optionLabels[o] : o}</option>`).join('');
+    return `<div class="${cls}"><label>${f.label}</label><select data-field="${f.key}">${opts}</select></div>`;
+  }
+  if(f.type==='programselect'){
+    return `<div class="${cls}"><label>${f.label}</label><select data-field="${f.key}">${programOptions(val, f.key==='programId' && f.label.includes('optional'))}</select></div>`;
+  }
+  if(f.type==='textarea'){
+    return `<div class="${cls}"><label>${f.label}</label><textarea data-field="${f.key}">${escapeHtml(val||'')}</textarea></div>`;
+  }
+  if(f.type==='checkbox'){
+    return `<div class="${cls}" style="flex-direction:row;align-items:center;gap:8px;"><input type="checkbox" data-field="${f.key}" ${val?'checked':''} style="width:auto;"><label style="text-transform:none;font-size:12px;">${f.label}</label></div>`;
+  }
+  if(f.type==='number'){
+    return `<div class="${cls}"><label>${f.label}</label><input type="number" min="0" max="100" data-field="${f.key}" value="${val!==undefined?val:''}"></div>`;
+  }
+  if(f.type==='date'){
+    return `<div class="${cls}"><label>${f.label}</label><input type="date" data-field="${f.key}" value="${val||''}"></div>`;
+  }
+  return `<div class="${cls}"><label>${f.label}</label><input type="text" data-field="${f.key}" value="${escapeHtml(val||'')}"></div>`;
+}
+
+function saveEntity(type, id, fields){
+  const overlay = document.getElementById('modal-overlay');
+  const data = {};
+  fields.forEach(f=>{
+    const inp = overlay.querySelector(`[data-field="${f.key}"]`);
+    if(!inp) return;
+    if(f.type==='checkbox') data[f.key] = inp.checked;
+    else if(f.type==='number') data[f.key] = inp.value===''? 0 : Number(inp.value);
+    else data[f.key] = inp.value;
+  });
+  // basic required validation
+  const missing = fields.filter(f=>f.required && !data[f.key]);
+  if(missing.length){
+    alert('Please fill in: '+missing.map(f=>f.label).join(', '));
+    return;
+  }
+  if(id){
+    const arr = state[ENTITY_STORE[type]];
+    const rec = byId(arr,id);
+    Object.assign(rec, data);
+  } else {
+    data.id = genId(ENTITY_PREFIX[type]);
+    state[ENTITY_STORE[type]].push(data);
+  }
+  persist();
+  closeModal();
+  renderAll();
+}
+
+/* =========================================================================
+   RESET / CLEAR
+   ========================================================================= */
+document.getElementById('btn-reset-data').onclick = async ()=>{
+  if(confirm('Reset all data back to the sample dataset? Your current data will be replaced.')){
+    state = seedState();
+    state.activeTab='dashboard'; state.filterProgram='all'; state.reportSlice='monthly';
+    await persist();
+    renderAll();
+  }
+};
+document.getElementById('btn-clear-data').onclick = async ()=>{
+  if(confirm('Clear everything — all programs, activities, defects, requests, and coverage items? This cannot be undone.')){
+    state = {_seq:0, filterProgram:'all', reportSlice:'monthly', activeTab:'dashboard', programs:[], activities:[], defects:[], requests:[], coverage:[]};
+    await persist();
+    renderAll();
+  }
+};
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+loadState();
+</script>
+</body>
+</html>
